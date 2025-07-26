@@ -1,0 +1,22 @@
+.chat-window {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.message-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.user-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
