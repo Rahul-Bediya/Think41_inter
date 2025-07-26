@@ -1,10 +1,8 @@
-const Message = require('../model/Message');
-const Conversation = require('../model/Conversation');
+const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
+const { OpenAI } = require('openai');
 
-// Dummy AI response function (we'll replace with LLM later)
-function getBotReply(userMessage) {
-  return `You said: ${userMessage}`;
-}
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 exports.chatHandler = async (req, res) => {
   const { message, conversationId } = req.body;
@@ -16,7 +14,7 @@ exports.chatHandler = async (req, res) => {
   try {
     let convoId = conversationId;
 
-    // Create new conversation if none provided
+    // Create a new conversation if not provided
     if (!convoId) {
       const newConvo = new Conversation({});
       await newConvo.save();
@@ -31,10 +29,24 @@ exports.chatHandler = async (req, res) => {
     });
     await userMsg.save();
 
-    // Generate AI response
-    const botReply = getBotReply(message);
+    // Send user input to OpenAI
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // or "gpt-4"
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful AI assistant for a t-shirt e-commerce website. Answer user queries about products, returns, sizes, delivery, etc."
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ]
+    });
 
-    // Save AI message
+    const botReply = response.choices[0].message.content;
+
+    // Save bot response
     const aiMsg = new Message({
       conversationId: convoId,
       sender: 'ai',
@@ -48,7 +60,7 @@ exports.chatHandler = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Chat API Error:", err);
-    res.status(500).json({ error: "Chat failed" });
+    console.error("❌ Chat error:", err.message);
+    res.status(500).json({ error: "Failed to get AI response" });
   }
 };
